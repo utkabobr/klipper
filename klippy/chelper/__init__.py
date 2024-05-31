@@ -23,8 +23,7 @@ SOURCE_FILES = [
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
     'kin_extruder.c', 'kin_shaper.c',
 ]
-# DEST_LIB = "c_helper.so"
-DEST_LIB = "libklippy_chelper.so"
+DEST_LIB = "${DEST_LIB}"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
     'trapq.h', 'pollreactor.h', 'msgblock.h'
@@ -266,7 +265,7 @@ def get_ffi():
         srcdir = os.path.dirname(os.path.realpath(__file__))
 #         srcfiles = get_abs_files(srcdir, SOURCE_FILES)
 #         ofiles = get_abs_files(srcdir, OTHER_FILES)
-        destlib = get_abs_files(srcdir, [DEST_LIB])[0]
+        destlib = DEST_LIB
 #         if check_build_code(srcfiles+ofiles+[__file__], destlib):
 #             if check_gcc_option(SSE_FLAGS):
 #                 cmd = "%s %s %s" % (GCC_CMD, SSE_FLAGS, COMPILE_ARGS)
