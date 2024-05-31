@@ -23,7 +23,8 @@ SOURCE_FILES = [
     'kin_deltesian.c', 'kin_polar.c', 'kin_rotary_delta.c', 'kin_winch.c',
     'kin_extruder.c', 'kin_shaper.c',
 ]
-DEST_LIB = "c_helper.so"
+# DEST_LIB = "c_helper.so"
+DEST_LIB = "libklippy_chelper.so"
 OTHER_FILES = [
     'list.h', 'serialqueue.h', 'stepcompress.h', 'itersolve.h', 'pyhelper.h',
     'trapq.h', 'pollreactor.h', 'msgblock.h'
@@ -263,16 +264,16 @@ def get_ffi():
     global FFI_main, FFI_lib, pyhelper_logging_callback
     if FFI_lib is None:
         srcdir = os.path.dirname(os.path.realpath(__file__))
-        srcfiles = get_abs_files(srcdir, SOURCE_FILES)
-        ofiles = get_abs_files(srcdir, OTHER_FILES)
+#         srcfiles = get_abs_files(srcdir, SOURCE_FILES)
+#         ofiles = get_abs_files(srcdir, OTHER_FILES)
         destlib = get_abs_files(srcdir, [DEST_LIB])[0]
-        if check_build_code(srcfiles+ofiles+[__file__], destlib):
-            if check_gcc_option(SSE_FLAGS):
-                cmd = "%s %s %s" % (GCC_CMD, SSE_FLAGS, COMPILE_ARGS)
-            else:
-                cmd = "%s %s" % (GCC_CMD, COMPILE_ARGS)
-            logging.info("Building C code module %s", DEST_LIB)
-            do_build_code(cmd % (destlib, ' '.join(srcfiles)))
+#         if check_build_code(srcfiles+ofiles+[__file__], destlib):
+#             if check_gcc_option(SSE_FLAGS):
+#                 cmd = "%s %s %s" % (GCC_CMD, SSE_FLAGS, COMPILE_ARGS)
+#             else:
+#                 cmd = "%s %s" % (GCC_CMD, COMPILE_ARGS)
+#             logging.info("Building C code module %s", DEST_LIB)
+#             do_build_code(cmd % (destlib, ' '.join(srcfiles)))
         FFI_main = cffi.FFI()
         for d in defs_all:
             FFI_main.cdef(d)
@@ -295,14 +296,15 @@ HC_TARGET = "hub-ctrl"
 HC_CMD = "sudo %s/hub-ctrl -h 0 -P 2 -p %d"
 
 def run_hub_ctrl(enable_power):
-    srcdir = os.path.dirname(os.path.realpath(__file__))
-    hubdir = os.path.join(srcdir, HC_SOURCE_DIR)
-    srcfiles = get_abs_files(hubdir, HC_SOURCE_FILES)
-    destlib = get_abs_files(hubdir, [HC_TARGET])[0]
-    if check_build_code(srcfiles, destlib):
-        logging.info("Building C code module %s", HC_TARGET)
-        do_build_code(HC_COMPILE_CMD % (destlib, ' '.join(srcfiles)))
-    os.system(HC_CMD % (hubdir, enable_power))
+    raise Exception('Not supported in Beam Klipper')
+#     srcdir = os.path.dirname(os.path.realpath(__file__))
+#     hubdir = os.path.join(srcdir, HC_SOURCE_DIR)
+#     srcfiles = get_abs_files(hubdir, HC_SOURCE_FILES)
+#     destlib = get_abs_files(hubdir, [HC_TARGET])[0]
+#     if check_build_code(srcfiles, destlib):
+#         logging.info("Building C code module %s", HC_TARGET)
+#         do_build_code(HC_COMPILE_CMD % (destlib, ' '.join(srcfiles)))
+#     os.system(HC_CMD % (hubdir, enable_power))
 
 
 if __name__ == '__main__':
