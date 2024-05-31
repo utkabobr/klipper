@@ -298,6 +298,8 @@ def arg_dictionary(option, opt_str, value, parser):
 def main():
     usage = "%prog [options] <config file>"
     opts = optparse.OptionParser(usage)
+    opts.add_option("-B", "--beam-input", dest="beaminput",
+                    help="configures input for beam")
     opts.add_option("-i", "--debuginput", dest="debuginput",
                     help="read commands from file instead of from tty port")
     opts.add_option("-I", "--input-tty", dest="inputtty",
@@ -327,7 +329,9 @@ def main():
     debuglevel = logging.INFO
     if options.verbose:
         debuglevel = logging.DEBUG
-    if options.debuginput:
+    if options.beaminput:
+        start_args['gcode_fd'] = open(options.beaminput, 'rb').fileno()
+    elif options.debuginput:
         start_args['debuginput'] = options.debuginput
         debuginput = open(options.debuginput, 'rb')
         start_args['gcode_fd'] = debuginput.fileno()
