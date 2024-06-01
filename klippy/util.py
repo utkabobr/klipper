@@ -11,11 +11,10 @@ import subprocess, traceback, shlex
 # Low-level Unix commands
 ######################################################################
 
-# Beam changed: Can't use with non-main thread
 # Return the SIGINT interrupt handler back to the OS default
-# def fix_sigint():
-#     signal.signal(signal.SIGINT, signal.SIG_DFL)
-# fix_sigint()
+def fix_sigint():
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+fix_sigint()
 
 # Set a file-descriptor as non-blocking
 def set_nonblock(fd):
