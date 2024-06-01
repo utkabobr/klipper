@@ -330,7 +330,9 @@ def main():
     if options.verbose:
         debuglevel = logging.DEBUG
     if options.beaminput:
-        start_args['gcode_fd'] = open(options.beaminput, 'rb').fileno()
+        beaminput = open(options.beaminput, 'rb')
+        start_args['gcode_fd'] = beaminput.fileno()
+        start_args['beam'] = True
     elif options.debuginput:
         start_args['debuginput'] = options.debuginput
         debuginput = open(options.debuginput, 'rb')

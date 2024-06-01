@@ -365,9 +365,10 @@ class GCodeIO:
         self.is_printer_ready = False
         self.is_processing_data = False
         self.is_fileinput = not not printer.get_start_args().get("debuginput")
+        self.is_beam = not not printer.get_start_args().get("beam")
         self.pipe_is_active = True
         self.fd_handle = None
-        if not self.is_fileinput:
+        if not self.is_fileinput and not self.is_beam:
             self.gcode.register_output_handler(self._respond_raw)
             self.fd_handle = self.reactor.register_fd(self.fd,
                                                       self._process_data)
