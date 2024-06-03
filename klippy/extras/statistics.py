@@ -28,7 +28,8 @@ class PrinterSysStats:
         self.last_process_time = ptime
         if pdiff > 0.:
             self.total_process_time += pdiff
-        self.last_load_avg = os.getloadavg()[0]
+        # Beam changed: N/a on Android
+        # self.last_load_avg = os.getloadavg()[0]
         msg = "sysload=%.2f cputime=%.3f" % (self.last_load_avg,
                                              self.total_process_time)
         # Get available system memory
