@@ -552,9 +552,10 @@ class MCU:
             cbid.add_uuid(config, canbus_uuid, self._canbus_iface)
         else:
             self._serialport = config.get('serial')
-            if not (self._serialport.startswith("/dev/rpmsg_")
-                    or self._serialport.startswith("/tmp/klipper_host_")):
-                self._baud = config.getint('baud', 250000, minval=2400)
+            # Beam changed: must use virtual serial, it's better to use connect_pipe with it
+            # if not (self._serialport.startswith("/dev/rpmsg_")
+            #         or self._serialport.startswith("/tmp/klipper_host_")):
+            #     self._baud = config.getint('baud', 250000, minval=2400)
         # Restarts
         restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
         self._restart_method = 'command'
