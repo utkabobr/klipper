@@ -20,6 +20,7 @@ class ExtruderStepper:
         self.sk_extruder = ffi_main.gc(ffi_lib.extruder_stepper_alloc(),
                                        ffi_lib.free)
         self.stepper.set_stepper_kinematics(self.sk_extruder)
+        self.motion_queue = None
         # Register commands
         self.printer.register_event_handler("klippy:connect",
                                             self._handle_connect)
@@ -37,19 +38,14 @@ class ExtruderStepper:
         gcode.register_mux_command("SYNC_EXTRUDER_MOTION", "EXTRUDER",
                                    self.name, self.cmd_SYNC_EXTRUDER_MOTION,
                                    desc=self.cmd_SYNC_EXTRUDER_MOTION_help)
-        gcode.register_mux_command("SET_EXTRUDER_STEP_DISTANCE", "EXTRUDER",
-                                   self.name, self.cmd_SET_E_STEP_DISTANCE,
-                                   desc=self.cmd_SET_E_STEP_DISTANCE_help)
-        gcode.register_mux_command("SYNC_STEPPER_TO_EXTRUDER", "STEPPER",
-                                   self.name, self.cmd_SYNC_STEPPER_TO_EXTRUDER,
-                                   desc=self.cmd_SYNC_STEPPER_TO_EXTRUDER_help)
     def _handle_connect(self):
         toolhead = self.printer.lookup_object('toolhead')
         toolhead.register_step_generator(self.stepper.generate_steps)
         self._set_pressure_advance(self.config_pa, self.config_smooth_time)
     def get_status(self, eventtime):
         return {'pressure_advance': self.pressure_advance,
-                'smooth_time': self.pressure_advance_smooth_time}
+                'smooth_time': self.pressure_advance_smooth_time,
+                'motion_queue': self.motion_queue}
     def find_past_position(self, print_time):
         mcu_pos = self.stepper.get_past_mcu_position(print_time)
         return self.stepper.mcu_to_commanded_position(mcu_pos)
@@ -58,6 +54,7 @@ class ExtruderStepper:
         toolhead.flush_step_generation()
         if not extruder_name:
             self.stepper.set_trapq(None)
+            self.motion_queue = None
             return
         extruder = self.printer.lookup_object(extruder_name, None)
         if extruder is None or not isinstance(extruder, PrinterExtruder):
@@ -65,6 +62,7 @@ class ExtruderStepper:
                                              % (extruder_name,))
         self.stepper.set_position([extruder.last_position, 0., 0.])
         self.stepper.set_trapq(extruder.get_trapq())
+        self.motion_queue = extruder_name
     def _set_pressure_advance(self, pressure_advance, smooth_time):
         old_smooth_time = self.pressure_advance_smooth_time
         if not self.pressure_advance:
@@ -127,24 +125,8 @@ class ExtruderStepper:
     def cmd_SYNC_EXTRUDER_MOTION(self, gcmd):
         ename = gcmd.get('MOTION_QUEUE')
         self.sync_to_extruder(ename)
-        gcmd.respond_info("Extruder stepper now syncing with '%s'" % (ename,))
-    cmd_SET_E_STEP_DISTANCE_help = "Set extruder step distance"
-    def cmd_SET_E_STEP_DISTANCE(self, gcmd):
-        step_dist = gcmd.get_float('DISTANCE', None, above=0.)
-        if step_dist is not None:
-            toolhead = self.printer.lookup_object('toolhead')
-            toolhead.flush_step_generation()
-            rd, steps_per_rotation = self.stepper.get_rotation_distance()
-            self.stepper.set_rotation_distance(step_dist * steps_per_rotation)
-        else:
-            step_dist = self.stepper.get_step_dist()
-        gcmd.respond_info("Extruder '%s' step distance set to %0.6f"
-                          % (self.name, step_dist))
-    cmd_SYNC_STEPPER_TO_EXTRUDER_help = "Set extruder stepper"
-    def cmd_SYNC_STEPPER_TO_EXTRUDER(self, gcmd):
-        ename = gcmd.get('EXTRUDER')
-        self.sync_to_extruder(ename)
-        gcmd.respond_info("Extruder stepper now syncing with '%s'" % (ename,))
+        gcmd.respond_info("Extruder '%s' now syncing with '%s'"
+                          % (self.name, ename))
 
 # Tracking for hotend heater, extrusion motion queue, and extruder stepper
 class PrinterExtruder:
@@ -153,14 +135,9 @@ class PrinterExtruder:
         self.name = config.get_name()
         self.last_position = 0.
         # Setup hotend heater
-        shared_heater = config.get('shared_heater', None)
         pheaters = self.printer.load_object(config, 'heaters')
         gcode_id = 'T%d' % (extruder_num,)
-        if shared_heater is None:
-            self.heater = pheaters.setup_heater(config, gcode_id)
-        else:
-            config.deprecate('shared_heater')
-            self.heater = pheaters.lookup_heater(shared_heater)
+        self.heater = pheaters.setup_heater(config, gcode_id)
         # Setup kinematic checks
         self.nozzle_diameter = config.getfloat('nozzle_diameter', above=0.)
         filament_diameter = config.getfloat(
@@ -205,8 +182,8 @@ class PrinterExtruder:
         gcode.register_mux_command("ACTIVATE_EXTRUDER", "EXTRUDER",
                                    self.name, self.cmd_ACTIVATE_EXTRUDER,
                                    desc=self.cmd_ACTIVATE_EXTRUDER_help)
-    def update_move_time(self, flush_time):
-        self.trapq_finalize_moves(self.trapq, flush_time)
+    def update_move_time(self, flush_time, clear_history_time):
+        self.trapq_finalize_moves(self.trapq, flush_time, clear_history_time)
     def get_status(self, eventtime):
         sts = self.heater.get_status(eventtime)
         sts['can_extrude'] = self.heater.can_extrude
@@ -307,7 +284,7 @@ class PrinterExtruder:
 class DummyExtruder:
     def __init__(self, printer):
         self.printer = printer
-    def update_move_time(self, flush_time):
+    def update_move_time(self, flush_time, clear_history_time):
         pass
     def check_move(self, move):
         raise move.move_error("Extrude when no extruder present")
