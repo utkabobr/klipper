@@ -5,6 +5,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, threading, os
 import serial
+import urllib.request
 
 import msgproto, chelper, util
 
@@ -376,13 +377,9 @@ def cheetah_reset(serialport, reactor):
 
 # Attempt an arduino style reset on a serial port
 def arduino_reset(serialport, reactor):
-    # First try opening the port at a different baud
-    ser = serial.Serial(serialport, 2400, timeout=0, exclusive=True)
-    ser.read(1)
-    reactor.pause(reactor.monotonic() + 0.100)
-    # Then toggle DTR
-    ser.dtr = True
-    reactor.pause(reactor.monotonic() + 0.100)
-    ser.dtr = False
-    reactor.pause(reactor.monotonic() + 0.100)
-    ser.close()
+    try:
+        response = urllib.request.urlopen('http://127.0.0.1:8888/beam/arduino_reset?serial=' + serialport)
+        data = response.read()
+        response.close()
+    except Exception:
+        logging.exception('Failed to request arduino reset')

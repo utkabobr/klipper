@@ -572,11 +572,11 @@ class MCU:
             #         or self._serialport.startswith("/tmp/klipper_host_")):
             #     self._baud = config.getint('baud', 250000, minval=2400)
         # Restarts
-        restart_methods = [None, 'arduino', 'cheetah', 'command', 'rpi_usb']
+        restart_methods = [None, 'arduino', 'command'] # Cheetah not supported yet (And I don't have the board to test anyway ¯\_(ツ)_/¯)
         self._restart_method = 'command'
-        if self._baud:
-            self._restart_method = config.getchoice('restart_method',
-                                                    restart_methods, None)
+        rmethods = {m: m for m in restart_methods}
+        self._restart_method = config.getchoice('restart_method',
+                                                rmethods, None)
         self._reset_cmd = self._config_reset_cmd = None
         self._is_mcu_bridge = False
         self._emergency_stop_cmd = None
