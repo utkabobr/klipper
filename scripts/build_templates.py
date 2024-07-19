@@ -43,7 +43,7 @@ def main():
                         os.system("./scripts/update_mks_robin.py out/klipper.bin out/" + file + ".bin")
                         if file_names:
                             for file_name in file_names:
-                                shutil.copy2(os.path.join(klipper_root, "./out/" + file + ".bin"), os.path.join(out, file_name + ".bin"))
+                                shutil.copy2(os.path.join(klipper_root, "./out/" + file + ".bin"), os.path.join(out, file_name))
                         else:
                             shutil.copy2(os.path.join(klipper_root, "./out/" + file + ".bin"), os.path.join(out, file + ".bin"))
 
