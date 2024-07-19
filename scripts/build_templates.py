@@ -16,14 +16,14 @@ def main():
     klipper_root = os.path.abspath(os.path.join(__file__, "../.."))
     os.chdir(klipper_root)
 
-    out = os.path.abspath(os.path.join(klipper_root, "./bin-templates/out"))
+    out = os.path.abspath(os.path.join(klipper_root, "./out-bin-templates"))
     if not os.path.exists(out):
         os.makedirs(out)
 
     templates = os.path.abspath(os.path.join(klipper_root, "./bin-templates"))
     for root, dirs, files in os.walk(templates):
         for file in files:
-            if file != "out" and not file.endswith(".json"):
+            if not file.endswith(".json"):
                 print("Building " + file + "...")
                 shutil.copy2(os.path.join(templates, file), os.path.abspath(os.path.join(__file__, "../../.config")))
                 os.system("make clean")
