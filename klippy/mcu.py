@@ -567,6 +567,22 @@ class MCU:
             cbid.add_uuid(config, canbus_uuid, self._canbus_iface)
         else:
             self._serialport = config.get('serial')
+
+            if self._serialport.startswith('/dev/'):
+                logging.info("[Beam] Note: ignoring serial setting %s, using '<auto>' instead", self._serialport)
+                self._serialport = '<auto>'
+
+            if self._serialport == '<auto>':
+                files = os.listdir(${TTY_PATH})
+                if len(files) != 1:
+                    if len(files) > 1:
+                        logging.error("[Beam] Error: failed to configure <auto>, more than one serial device found")
+                    else:
+                        logging.error("[Beam] Error: failed to configure <auto>, no devices found")
+                    raise error('Failed to find serial port with <auto> setting. Check logs for more info!')
+                self._serialport = ${TTY_PATH} + '/' + files[0]
+                logging.info("[Beam] Configured '<auto>' to '%s'", self._serialport)
+
             # Beam changed: must use virtual serial, it's better to use connect_pipe with it
             # if not (self._serialport.startswith("/dev/rpmsg_")
             #         or self._serialport.startswith("/tmp/klipper_host_")):
